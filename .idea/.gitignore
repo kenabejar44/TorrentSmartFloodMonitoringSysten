@@ -1,3 +1,25 @@
+
 # Default ignored files
 /shelf/
-/workspacgit --versione.xml
+/.idea/workspace.xml
+
+# Local configuration
+local.properties
+
+# Secret configuration
+secrets.properties
+.env
+.env.*
+
+# Signing credentials
+*.jks
+*.keystore
+
+# Service account credentials
+*-service-account.json
+service-account*.json
+
+# Build outputs
+.gradle/
+build/
+app/build/

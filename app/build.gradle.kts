@@ -1,7 +1,22 @@
+
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     id("com.google.gms.google-services")
 }
+
+// Load local secrets
+val secretsProperties = Properties()
+val secretsFile = rootProject.file("secrets.properties")
+
+if (secretsFile.exists()) {
+    secretsFile.inputStream().use {
+        secretsProperties.load(it)
+    }
+}
+
+val weatherApiKey = secretsProperties.getProperty("WEATHER_API_KEY", "")
 
 android {
     namespace = "com.example.mainpage"
@@ -15,7 +30,12 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "WEATHER_API_KEY", "\"REMOVED_API_KEY\"")
+
+        buildConfigField(
+            "String",
+            "WEATHER_API_KEY",
+            "\"${weatherApiKey}\""
+        )
     }
 
     buildTypes {
@@ -27,9 +47,11 @@ android {
             )
         }
     }
+
     buildFeatures {
         buildConfig = true
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -43,9 +65,11 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.database)
     implementation(libs.material)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.ext.junit)
+
     implementation(platform("com.google.firebase:firebase-bom:34.14.0"))
     implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation(libs.play.services.maps)
@@ -55,6 +79,7 @@ dependencies {
     implementation(libs.gson)
     implementation(libs.firebase.ai)
     implementation(libs.reactive.streams)
+
     implementation("com.google.firebase:firebase-appcheck-debug")
     implementation("com.google.firebase:firebase-appcheck-playintegrity")
     implementation("com.google.firebase:firebase-appcheck")
