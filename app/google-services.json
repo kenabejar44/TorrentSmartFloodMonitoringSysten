@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "822848536699",
+    "firebase_url": "https://finalfirebase-45c72-default-rtdb.firebaseio.com",
+    "project_id": "finalfirebase-45c72",
+    "storage_bucket": "finalfirebase-45c72.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:822848536699:android:36b5f2fcb316cc657662de",
+        "android_client_info": {
+          "package_name": "AndroidManifest.xml"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCSD8yZWLj7Df_lcllOL2XOC_cxJn5gp-I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:822848536699:android:dca8c523cfe3ad087662de",
+        "android_client_info": {
+          "package_name": "com.example.mainpage"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCSD8yZWLj7Df_lcllOL2XOC_cxJn5gp-I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,16 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Simplified wave representation inspired by the user's image -->
+    <path
+        android:fillColor="#2196F3"
+        android:pathData="M0,60 C20,40 40,80 60,60 C80,40 100,60 108,60 L108,108 L0,108 Z" />
+    <path
+        android:fillColor="#64B5F6"
+        android:pathData="M0,75 C25,60 45,90 65,75 C85,60 105,75 108,75 L108,108 L0,108 Z" />
+    <path
+        android:fillColor="#1976D2"
+        android:pathData="M0,90 C30,80 50,100 70,90 C90,80 108,90 108,90 L108,108 L0,108 Z" />
+</vector>

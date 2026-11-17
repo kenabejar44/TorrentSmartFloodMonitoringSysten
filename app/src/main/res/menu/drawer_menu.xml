@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:id="@+id/group_monitoring" android:checkableBehavior="none">
+        <item
+            android:id="@+id/nav_home_drawer"
+            android:title="Dashboard Home"
+            android:icon="@android:drawable/ic_menu_today" />
+    </group>
+
+    <item android:title="EMERGENCY">
+        <menu>
+            <item
+                android:id="@+id/evacuation"
+                android:title="Evacuation Centers"
+                android:icon="@android:drawable/ic_menu_compass"/>
+
+            <item
+                android:id="@+id/hotline"
+                android:title="Emergency Hotlines"
+                android:icon="@android:drawable/ic_menu_call"/>
+
+            <item
+                android:id="@+id/precaution"
+                android:title="Safety Precautions"
+                android:icon="@android:drawable/ic_menu_info_details"/>
+        </menu>
+    </item>
+
+    <item android:title="INFORMATION">
+        <menu>
+            <item
+                android:id="@+id/news"
+                android:title="PAGASA Flood News &amp; Weather"
+                android:icon="@android:drawable/ic_popup_reminder"/>
+        </menu>
+    </item>
+
+
+
+</menu>
