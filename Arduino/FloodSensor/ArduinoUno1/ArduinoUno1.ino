@@ -162,6 +162,8 @@ void readWaterLevel() {
 
     redLedState = false;
 
+    espSerial.println("-1.0,NO_DATA");
+
     return;
   }
 
@@ -187,6 +189,8 @@ void readWaterLevel() {
     buzzerCooldown = false;
 
     redLedState = false;
+
+    espSerial.println("-1.0,NO_DATA");
 
     return;
   }

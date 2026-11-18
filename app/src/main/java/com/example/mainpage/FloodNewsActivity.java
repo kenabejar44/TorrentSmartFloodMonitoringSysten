@@ -42,10 +42,26 @@ public class FloodNewsActivity extends AppCompatActivity {
         webSettings.setUseWideViewPort(true);
         webSettings.setBuiltInZoomControls(true);
         webSettings.setDisplayZoomControls(false);
-        webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
 
         webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, android.webkit.WebResourceRequest request) {
+                if (request != null && request.getUrl() != null) {
+                    String url = request.getUrl().toString();
+                    if (url.startsWith("https://bagong.pagasa.dost.gov.ph") || url.contains("pagasa.dost.gov.ph")) {
+                        return false; // Allow trusted PAGASA URLs in WebView
+                    }
+                    try {
+                        android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_VIEW, request.getUrl());
+                        startActivity(intent);
+                    } catch (Exception ignored) {}
+                    return true;
+                }
+                return false;
+            }
+
             @Override
             public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
                 progressBar.setVisibility(View.VISIBLE);
@@ -58,7 +74,7 @@ public class FloodNewsActivity extends AppCompatActivity {
 
             @Override
             public void onReceivedError(WebView view, android.webkit.WebResourceRequest request, android.webkit.WebResourceError error) {
-                if (request.isForMainFrame()) {
+                if (request != null && request.isForMainFrame()) {
                     progressBar.setVisibility(View.GONE);
                     android.widget.Toast.makeText(FloodNewsActivity.this, "Unable to load news. Please check your connection.", android.widget.Toast.LENGTH_SHORT).show();
                 }
@@ -66,7 +82,9 @@ public class FloodNewsActivity extends AppCompatActivity {
 
             @Override
             public void onReceivedSslError(WebView view, android.webkit.SslErrorHandler handler, android.net.http.SslError error) {
-                handler.proceed(); // Ignore SSL errors for PAGASA if needed
+                handler.cancel(); // Strictly reject invalid SSL certificates
+                progressBar.setVisibility(View.GONE);
+                android.widget.Toast.makeText(FloodNewsActivity.this, "SSL Certificate Error: Connection blocked for security.", android.widget.Toast.LENGTH_LONG).show();
             }
         });
 

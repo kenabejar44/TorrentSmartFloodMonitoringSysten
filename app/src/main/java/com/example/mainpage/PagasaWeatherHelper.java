@@ -65,6 +65,13 @@ public class PagasaWeatherHelper {
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 InputStream is = conn.getInputStream();
                 DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+                try {
+                    dbFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+                    dbFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+                    dbFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+                    dbFactory.setXIncludeAware(false);
+                    dbFactory.setExpandEntityReferences(false);
+                } catch (Throwable ignored) {}
                 DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
                 Document doc = dBuilder.parse(is);
                 doc.getDocumentElement().normalize();

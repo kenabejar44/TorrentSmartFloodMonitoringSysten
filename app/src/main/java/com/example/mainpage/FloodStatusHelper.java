@@ -8,15 +8,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-/**
- * Standardized helper for Water Level Status, Thresholds, Trends, Stations, and Data Freshness.
- * Ensures consistent terminology and thresholds across the entire application:
- * - SAFE: Water level <= 50.0 cm
- * - WARNING: Water level 50.1 - 70.0 cm
- * - DANGER / CRITICAL: Water level > 70.0 cm
- * - Reference Height: 200.0 cm
- * - Trends: Rising, Falling, Stable
- */
 public class FloodStatusHelper {
 
     public static final String PREFS_NAME = "FloodMonitorPrefs";
@@ -286,6 +277,10 @@ public class FloodStatusHelper {
     public static final String STATUS_WARNING = "WARNING";
     public static final String STATUS_DANGER = "DANGER";
     public static final String STATUS_CRITICAL = "CRITICAL";
+    public static final String STATUS_STALE_DATA = "STALE DATA";
+    public static final String STATUS_NO_DATA = "NO DATA";
+
+    public static final long STALE_DATA_THRESHOLD_MS = 7200000L; // 2 hours
 
     public static final String TREND_RISING = "Rising";
     public static final String TREND_FALLING = "Falling";
@@ -299,6 +294,12 @@ public class FloodStatusHelper {
         "All Stations", "Putatan", "Alabang", "Bayanan", "Buli", "Cupang", "Poblacion", "Sucat", "Tunasan", "Ayala Alabang"
     };
 
+    public static boolean isStaleTimestamp(long timestampMillis) {
+        if (timestampMillis <= 0) return true;
+        long diff = System.currentTimeMillis() - timestampMillis;
+        return diff > STALE_DATA_THRESHOLD_MS;
+    }
+
     public static boolean isDangerOrCritical(String status) {
         if (status == null) return false;
         String s = status.trim().toUpperCase(Locale.ROOT);
@@ -307,7 +308,7 @@ public class FloodStatusHelper {
 
     public static String getStatus(double waterLevelCm) {
         if (Double.isNaN(waterLevelCm) || Double.isInfinite(waterLevelCm) || waterLevelCm < 0.0) {
-            return "NO DATA";
+            return STATUS_NO_DATA;
         }
         if (waterLevelCm <= SAFE_THRESHOLD) {
             return STATUS_SAFE;
@@ -316,6 +317,13 @@ public class FloodStatusHelper {
         } else {
             return STATUS_DANGER;
         }
+    }
+
+    public static String getStatus(double waterLevelCm, boolean isStale) {
+        if (isStale) {
+            return STATUS_STALE_DATA;
+        }
+        return getStatus(waterLevelCm);
     }
 
     public static int getStatusColor(Context context, double waterLevelCm) {
@@ -328,7 +336,9 @@ public class FloodStatusHelper {
             return ContextCompat.getColor(context, R.color.text_secondary);
         }
         String upper = status.trim().toUpperCase(Locale.ROOT);
-        if (STATUS_SAFE.equals(upper) || upper.contains("SAFE")) {
+        if (upper.contains("STALE")) {
+            return ContextCompat.getColor(context, R.color.warning_orange);
+        } else if (STATUS_SAFE.equals(upper) || upper.contains("SAFE")) {
             return ContextCompat.getColor(context, R.color.safe_green);
         } else if (STATUS_WARNING.equals(upper) || upper.contains("WARN")) {
             return ContextCompat.getColor(context, R.color.warning_orange);
@@ -348,7 +358,9 @@ public class FloodStatusHelper {
             return "Unable to retrieve live sensor reading from station.";
         }
         String upper = status.trim().toUpperCase(Locale.ROOT);
-        if (STATUS_SAFE.equals(upper) || upper.contains("SAFE")) {
+        if (upper.contains("STALE")) {
+            return "Sensor data is outdated (> 2 hours old). Current water level is unconfirmed.";
+        } else if (STATUS_SAFE.equals(upper) || upper.contains("SAFE")) {
             return "Water level is within safe limit (<= 50.0 cm). No immediate hazard.";
         } else if (STATUS_WARNING.equals(upper) || upper.contains("WARN")) {
             return "Water level is elevated (50.1 - 70.0 cm). Stay alert and prepare emergency supplies.";

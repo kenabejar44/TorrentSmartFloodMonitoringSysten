@@ -261,11 +261,15 @@ public class FloodMonitorService extends Service {
                             for (DataSnapshot stationSnap : snapshot.getChildren()) {
                                 DataSnapshot currentSnap = stationSnap.child("Current");
                                 Object rawValue = FloodStatusHelper.getWaterLevelValueFromSnapshot(currentSnap);
-                                if (rawValue != null && FloodStatusHelper.isValidWaterLevelReading(rawValue)) {
+                                Object tsObj = FloodStatusHelper.getTimestampValueFromSnapshot(currentSnap);
+                                long tsMillis = FloodStatusHelper.parseTimestampToMillis(tsObj);
+                                boolean isStale = FloodStatusHelper.isStaleTimestamp(tsMillis);
+
+                                if (rawValue != null && FloodStatusHelper.isValidWaterLevelReading(rawValue) && !isStale) {
                                     double lvl = FloodStatusHelper.parseWaterLevel(rawValue);
                                     if (lvl > maxLevel) {
                                         maxLevel = lvl;
-                                        maxTsObj = FloodStatusHelper.getTimestampValueFromSnapshot(currentSnap);
+                                        maxTsObj = tsObj;
                                     }
                                     valid = true;
                                 }

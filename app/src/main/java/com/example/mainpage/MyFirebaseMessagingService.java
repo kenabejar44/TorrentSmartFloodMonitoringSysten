@@ -89,7 +89,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
         String type = data.get("type");
         if (type == null || type.isEmpty()) {
-            type = "flood_alert";
+            type = "general";
         }
 
         String contentHash = data.get("hash");
@@ -103,33 +103,37 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             return;
         }
 
-        NotificationDeduplicator.markHashProcessed(this, contentHash);
-
+        boolean delivered = false;
         switch (type.toLowerCase()) {
             case "critical":
             case "flood_alert":
             case "water_level":
-                handleCriticalWaterAlert(data, title, body);
+                delivered = handleCriticalWaterAlert(data, title, body);
                 break;
             case "pagasa":
             case "pagasa_advisory":
-                handlePagasaAdvisory(data, title, body);
+                delivered = handlePagasaAdvisory(data, title, body);
                 break;
             case "weather":
             case "weather_alert":
-                handleWeatherAlert(data, title, body);
+                delivered = handleWeatherAlert(data, title, body);
                 break;
             case "news":
             case "flood_news":
-                handleFloodNews(data, title, body);
+                delivered = handleFloodNews(data, title, body);
                 break;
             default:
-                handleCriticalWaterAlert(data, title, body);
+                // Unknown/General notification types must NOT automatically become critical flood alerts
+                delivered = handleWeatherAlert(data, title, body);
                 break;
+        }
+
+        if (delivered) {
+            NotificationDeduplicator.markHashProcessed(this, contentHash);
         }
     }
 
-    private void handleCriticalWaterAlert(Map<String, String> data, String title, String body) {
+    private boolean handleCriticalWaterAlert(Map<String, String> data, String title, String body) {
         String stationId = data.getOrDefault("station_id", "ST001");
         String stationName = data.getOrDefault("station_name", "Putatan");
 
@@ -158,10 +162,10 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent);
 
-        postNotification(NOTIF_ID_CRITICAL, builder.build());
+        return postNotification(NOTIF_ID_CRITICAL, builder.build());
     }
 
-    private void handlePagasaAdvisory(Map<String, String> data, String title, String body) {
+    private boolean handlePagasaAdvisory(Map<String, String> data, String title, String body) {
         String targetTab = data.getOrDefault("target_tab", "weather");
 
         ensureChannel(CHANNEL_PAGASA, "PAGASA Official Advisories", NotificationManager.IMPORTANCE_HIGH, false);
@@ -190,10 +194,10 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent);
 
-        postNotification(NOTIF_ID_PAGASA, builder.build());
+        return postNotification(NOTIF_ID_PAGASA, builder.build());
     }
 
-    private void handleWeatherAlert(Map<String, String> data, String title, String body) {
+    private boolean handleWeatherAlert(Map<String, String> data, String title, String body) {
         boolean isSevere = "true".equalsIgnoreCase(data.get("is_severe"));
 
         ensureChannel(CHANNEL_WEATHER, "Local Weather Forecasts", isSevere ? NotificationManager.IMPORTANCE_HIGH : NotificationManager.IMPORTANCE_DEFAULT, false);
@@ -220,10 +224,10 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent);
 
-        postNotification(NOTIF_ID_WEATHER, builder.build());
+        return postNotification(NOTIF_ID_WEATHER, builder.build());
     }
 
-    private void handleFloodNews(Map<String, String> data, String title, String body) {
+    private boolean handleFloodNews(Map<String, String> data, String title, String body) {
         ensureChannel(CHANNEL_NEWS, "Flood News Updates", NotificationManager.IMPORTANCE_DEFAULT, false);
 
         Intent intent = new Intent(this, FloodNewsActivity.class);
@@ -247,7 +251,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent);
 
-        postNotification(NOTIF_ID_NEWS, builder.build());
+        return postNotification(NOTIF_ID_NEWS, builder.build());
     }
 
     private void ensureChannel(String channelId, String name, int importance, boolean bypassDnd) {
@@ -266,10 +270,22 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         }
     }
 
-    private void postNotification(int notificationId, android.app.Notification notification) {
+    private boolean postNotification(int notificationId, android.app.Notification notification) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                Log.w(TAG, "Cannot post notification: POST_NOTIFICATIONS permission not granted.");
+                return false;
+            }
+        }
         NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (nm != null) {
-            nm.notify(notificationId, notification);
+            try {
+                nm.notify(notificationId, notification);
+                return true;
+            } catch (Throwable t) {
+                Log.e(TAG, "Failed to post notification: " + t.getMessage());
+            }
         }
+        return false;
     }
 }

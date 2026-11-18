@@ -1,0 +1,38 @@
+{
+  "rules": {
+    "FloodMonitoringSystem": {
+      "Stations": {
+        "$stationId": {
+          "Current": {
+            ".read": "auth != null",
+            ".write": "auth != null",
+            "WaterLevel": {
+              ".validate": "newData.isNumber() && newData.val() >= -1.0 && newData.val() <= 2000.0"
+            },
+            "Status": {
+              ".validate": "newData.isString()"
+            },
+            "Timestamp": {
+              ".validate": "newData.val() <= now"
+            }
+          },
+          "History": {
+            ".read": "auth != null",
+            ".write": "auth != null",
+            "$recordId": {
+              ".validate": "newData.hasChildren(['WaterLevel', 'Status', 'Timestamp'])"
+            }
+          }
+        }
+      }
+    },
+    "Users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+    ".read": false,
+    ".write": false
+  }
+}

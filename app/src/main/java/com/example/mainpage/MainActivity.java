@@ -575,14 +575,17 @@ public class MainActivity extends AppCompatActivity {
                             for (DataSnapshot stationSnap : snapshot.getChildren()) {
                                 DataSnapshot currentSnap = stationSnap.child("Current");
                                 Object rawValue = FloodStatusHelper.getWaterLevelValueFromSnapshot(currentSnap);
-                                if (rawValue != null && FloodStatusHelper.isValidWaterLevelReading(rawValue)) {
+                                Object tsObj = FloodStatusHelper.getTimestampValueFromSnapshot(currentSnap);
+                                long tsMillis = FloodStatusHelper.parseTimestampToMillis(tsObj);
+                                boolean isStale = FloodStatusHelper.isStaleTimestamp(tsMillis);
+
+                                if (rawValue != null && FloodStatusHelper.isValidWaterLevelReading(rawValue) && !isStale) {
                                     double lvl = FloodStatusHelper.parseWaterLevel(rawValue);
                                     if (lvl > maxLevel) {
                                         maxLevel = lvl;
                                         maxPct = FloodStatusHelper.getPercentageValueFromSnapshot(currentSnap);
-                                        Object tsObj = FloodStatusHelper.getTimestampValueFromSnapshot(currentSnap);
-                                        if (tsObj instanceof Number) {
-                                            maxTsMillis = ((Number) tsObj).longValue();
+                                        maxTsMillis = tsMillis;
+                                        if (maxTsMillis > 0) {
                                             java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("MMM dd, yyyy hh:mm a", Locale.getDefault());
                                             maxTs = sdf.format(new java.util.Date(maxTsMillis));
                                         } else if (tsObj instanceof String) {
@@ -705,7 +708,8 @@ public class MainActivity extends AppCompatActivity {
 
         double oldLevel = currentWaterLevel;
         currentWaterLevel = level;
-        String status = FloodStatusHelper.getStatus(level);
+        boolean isStale = FloodStatusHelper.isStaleTimestamp(timestampMillis);
+        String status = FloodStatusHelper.getStatus(level, isStale);
         int colorRes = FloodStatusHelper.getStatusColorForStatus(this, status);
 
         if (txtWaterLevel != null) {
@@ -718,7 +722,7 @@ public class MainActivity extends AppCompatActivity {
             statusText.setTextColor(colorRes);
         }
 
-        if (!FloodStatusHelper.isDangerOrCritical(status)) {
+        if (isStale || !FloodStatusHelper.isDangerOrCritical(status)) {
             stopForegroundSoundAlert();
             stopForegroundVibration();
             FlashlightHelper.stopFlashAlert(this);

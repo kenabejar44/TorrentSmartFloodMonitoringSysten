@@ -338,17 +338,18 @@ public class AIAnalyticsActivity extends AppCompatActivity {
         if (val != null && FloodStatusHelper.isValidWaterLevelReading(val)) {
             double lvl = FloodStatusHelper.parseWaterLevel(val);
             long ts = FloodStatusHelper.parseTimestampToMillis(tsObj);
-            if (ts <= 0) {
-                ts = System.currentTimeMillis(); // Fallback timestamp if missing
+            long now = System.currentTimeMillis();
+            // Reject missing (ts<=0), invalid, or future (> now + 1 min) timestamps
+            if (ts > 0 && ts <= now + 60000L) {
+                historicalReadings.add(new ReadingPoint(ts, lvl));
             }
-            historicalReadings.add(new ReadingPoint(ts, lvl));
         }
     }
 
 
     private void performAnalyticsAndForecasting() {
         if (!hasValidCurrentReading && historicalReadings.isEmpty()) {
-            showError("No sensor data available for station " + FloodStatusHelper.getStationDisplayName(stationId) + ".");
+            showError("No valid sensor data available for station " + FloodStatusHelper.getStationDisplayName(stationId) + ".");
             return;
         }
 
@@ -423,6 +424,9 @@ public class AIAnalyticsActivity extends AppCompatActivity {
             double denominator = (n * sumXX) - (sumX * sumX);
             if (Math.abs(denominator) > 1e-6) {
                 slopePerMinute = ((n * sumXY) - (sumX * sumY)) / denominator;
+                // Cap slopePerMinute to realistic physical limits (max ±2.0 cm/min = ±120 cm/hr)
+                if (slopePerMinute > 2.0) slopePerMinute = 2.0;
+                if (slopePerMinute < -2.0) slopePerMinute = -2.0;
             }
         }
 
